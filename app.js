@@ -9,6 +9,17 @@ var usersRouter = require('./routes/users');
 var courseRouter = require('./routes/courseRouter');
 var developerRouter = require('./routes/developerRouter');
 
+const mongoose = require('mongoose');
+
+const Courses = require('./models/courses');
+
+const url = 'mongodb://localhost:27017/conFusion';
+const connect = mongoose.connect(url);
+
+connect.then((db) => {
+    console.log("Connected correctly to server");
+}, (err) => { console.log(err); });
+
 var app = express();
 
 // view engine setup
