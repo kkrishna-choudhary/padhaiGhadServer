@@ -1,43 +1,43 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
 
-const Developers = require('../models/developers');
+const mongoose = require('mongoose');
+const Specials = require('../models/specials');
 
 var authenticate = require('../authenticate');
 const cors = require('./cors');
 
-const developerRouter = express.Router();
+const specialRouter = express.Router();
 
-developerRouter.use(bodyParser.json());
+specialRouter.use(bodyParser.json());
 
-developerRouter.route('/')
+specialRouter.route('/')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .get(cors.cors,(req,res,next) => {
-    Developers.find(req.query)
-    .then((developers) => {
+    Specials.find(req.query)
+    .then((specials) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        res.json(developers);
+        res.json(specials);
     }, (err) => next(err))
     .catch((err) => next(err));
 })
 .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    Developers.create(req.body)
-    .then((developer) => {
-        console.log('Developer Created ', developer);
+    Specials.create(req.body)
+    .then((special) => {
+        console.log('Special Created ', special);
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        res.json(developer);
+        res.json(special);
     }, (err) => next(err))
     .catch((err) => next(err));
 })
 .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
-    res.end('PUT operation not supported on /developers');
+    res.end('PUT operation not supported on /specials');
 })
 .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    Developers.remove({})
+    Specials.remove({})
     .then((resp) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -46,34 +46,34 @@ developerRouter.route('/')
     .catch((err) => next(err));    
 });
 
-developerRouter.route('/:developerId')
+specialRouter.route('/:specialId')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .get(cors.cors,(req,res,next) => {
-    Developers.findById(req.params.developerId)
-    .then((developer) => {
+    Specials.findById(req.params.specialId)
+    .then((special) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        res.json(developer);
+        res.json(special);
     }, (err) => next(err))
     .catch((err) => next(err));
 })
 .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
-    res.end('POST operation not supported on /developers/'+ req.params.developerId);
+    res.end('POST operation not supported on /specials/'+ req.params.specialId);
 })
 .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    Developers.findByIdAndUpdate(req.params.developerId, {
+    Specials.findByIdAndUpdate(req.params.specialId, {
         $set: req.body
     }, { new: true })
-    .then((developer) => {
+    .then((special) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        res.json(developer);
+        res.json(special);
     }, (err) => next(err))
     .catch((err) => next(err));
 })
 .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    Developers.findByIdAndRemove(req.params.developerId)
+    Specials.findByIdAndRemove(req.params.specialId)
     .then((resp) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -82,4 +82,4 @@ developerRouter.route('/:developerId')
     .catch((err) => next(err));
 });
 
-module.exports = developerRouter;
+module.exports = specialRouter;

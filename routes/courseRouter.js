@@ -4,13 +4,18 @@ const mongoose = require('mongoose');
 
 const Courses = require('../models/courses');
 
+var authenticate = require('../authenticate');
+const cors = require('./cors');
+
 const courseRouter = express.Router();
 
 courseRouter.use(bodyParser.json());
 
 courseRouter.route('/')
-.get((req,res,next) => {
-    Courses.find({})
+.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+.get(cors.cors,(req,res,next) => {
+    Courses.find(req.query)
+    .populate('courseItems.teacher')
     .then((courses) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -18,7 +23,7 @@ courseRouter.route('/')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
-.post((req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Courses.create(req.body)
     .then((course) => {
         console.log('Course Created ', course);
@@ -28,11 +33,11 @@ courseRouter.route('/')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
-.put((req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
     res.end('PUT operation not supported on /courses');
 })
-.delete((req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Courses.remove({})
     .then((resp) => {
         res.statusCode = 200;
@@ -43,8 +48,10 @@ courseRouter.route('/')
 });
 
 courseRouter.route('/:courseId')
-.get((req,res,next) => {
+.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+.get(cors.cors,(req,res,next) => {
     Courses.findById(req.params.courseId)
+    .populate('courseItems.teacher')
     .then((course) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -52,11 +59,11 @@ courseRouter.route('/:courseId')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
-.post((req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
     res.end('POST operation not supported on /courses/'+ req.params.courseId);
 })
-.put((req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Courses.findByIdAndUpdate(req.params.courseId, {
         $set: req.body
     }, { new: true })
@@ -67,7 +74,7 @@ courseRouter.route('/:courseId')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
-.delete((req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Courses.findByIdAndRemove(req.params.courseId)
     .then((resp) => {
         res.statusCode = 200;
@@ -78,153 +85,155 @@ courseRouter.route('/:courseId')
 });
 
 
-courseRouter.route('/:courseId/courseItem')
-.get((req,res,next) => {
-    Courses.findById(req.params.courseId)
-    .then((course) => {
-        if (course != null) {
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'application/json');
-            res.json(course.courseItem);
-        }
-        else {
-            err = new Error('Course ' + req.params.courseId + ' not found');
-            err.status = 404;
-            return next(err);
-        }
-    }, (err) => next(err))
-    .catch((err) => next(err));
-})
-.post((req, res, next) => {
-    Courses.findById(req.params.courseId)
-    .then((course) => {
-        if (course != null) {
-            course.courseItem.push(req.body);
-            course.save()
-            .then((course) => {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(course);                
-            }, (err) => next(err));
-        }
-        else {
-            err = new Error('Course ' + req.params.courseId + ' not found');
-            err.status = 404;
-            return next(err);
-        }
-    }, (err) => next(err))
-    .catch((err) => next(err));
-})
-.put((req, res, next) => {
-    res.statusCode = 403;
-    res.end('PUT operation not supported on /courses/'
-        + req.params.courseId + '/courseItem');
-})
-.delete((req, res, next) => {
-    Courses.findById(req.params.courseId)
-    .then((course) => {
-        if (course != null) {
-            for (var i = (course.courseItem.length -1); i >= 0; i--) {
-                course.courseItem.id(course.courseItem[i]._id).remove();
-            }
-            course.save()
-            .then((course) => {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(course);                
-            }, (err) => next(err));
-        }
-        else {
-            err = new Error('Course ' + req.params.courseId + ' not found');
-            err.status = 404;
-            return next(err);
-        }
-    }, (err) => next(err))
-    .catch((err) => next(err));    
-});
+// courseRouter.route('/:courseId/courseItem')
+// .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+// .get(cors.cors,(req,res,next) => {
+//     Courses.findById(req.params.courseId)
+//     .then((course) => {
+//         if (course != null) {
+//             res.statusCode = 200;
+//             res.setHeader('Content-Type', 'application/json');
+//             res.json(course.courseItem);
+//         }
+//         else {
+//             err = new Error('Course ' + req.params.courseId + ' not found');
+//             err.status = 404;
+//             return next(err);
+//         }
+//     }, (err) => next(err))
+//     .catch((err) => next(err));
+// })
+// .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+//     Courses.findById(req.params.courseId)
+//     .then((course) => {
+//         if (course != null) {
+//             course.courseItem.push(req.body);
+//             course.save()
+//             .then((course) => {
+//                 res.statusCode = 200;
+//                 res.setHeader('Content-Type', 'application/json');
+//                 res.json(course);                
+//             }, (err) => next(err));
+//         }
+//         else {
+//             err = new Error('Course ' + req.params.courseId + ' not found');
+//             err.status = 404;
+//             return next(err);
+//         }
+//     }, (err) => next(err))
+//     .catch((err) => next(err));
+// })
+// .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+//     res.statusCode = 403;
+//     res.end('PUT operation not supported on /courses/'
+//         + req.params.courseId + '/courseItem');
+// })
+// .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+//     Courses.findById(req.params.courseId)
+//     .then((course) => {
+//         if (course != null) {
+//             for (var i = (course.courseItem.length -1); i >= 0; i--) {
+//                 course.courseItem.id(course.courseItem[i]._id).remove();
+//             }
+//             course.save()
+//             .then((course) => {
+//                 res.statusCode = 200;
+//                 res.setHeader('Content-Type', 'application/json');
+//                 res.json(course);                
+//             }, (err) => next(err));
+//         }
+//         else {
+//             err = new Error('Course ' + req.params.courseId + ' not found');
+//             err.status = 404;
+//             return next(err);
+//         }
+//     }, (err) => next(err))
+//     .catch((err) => next(err));    
+// });
 
-courseRouter.route('/:courseId/courseItem/:courseItemId')
-.get((req,res,next) => {
-    Courses.findById(req.params.courseId)
-    .then((course) => {
-        if (course != null && course.courseItem.id(req.params.courseItemId) != null) {
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'application/json');
-            res.json(course.courseItem.id(req.params.courseItemId));
-        }
-        else if (course == null) {
-            err = new Error('Course ' + req.params.courseId + ' not found');
-            err.status = 404;
-            return next(err);
-        }
-        else {
-            err = new Error('CourseItem ' + req.params.courseItemId + ' not found');
-            err.status = 404;
-            return next(err);            
-        }
-    }, (err) => next(err))
-    .catch((err) => next(err));
-})
-.post((req, res, next) => {
-    res.statusCode = 403;
-    res.end('POST operation not supported on /courses/'+ req.params.courseId
-        + '/courseItem/' + req.params.courseItemId);
-})
-.put((req, res, next) => {
-    Courses.findById(req.params.courseId)
-    .then((course) => {
-        if (course != null && course.courseItem.id(req.params.courseItemId) != null) {
-            if (req.body.title) {
-                course.courseItem.id(req.params.courseItemId).title = req.body.title;
-            }
-            if (req.body.video) {
-                course.couseItem.id(req.params.courseItemId).video = req.body.video;                
-            }
-            course.save()
-            .then((course) => {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(course);                
-            }, (err) => next(err));
-        }
-        else if (course == null) {
-            err = new Error('Course ' + req.params.courseId + ' not found');
-            err.status = 404;
-            return next(err);
-        }
-        else {
-            err = new Error('CourseItem ' + req.params.courseItemId + ' not found');
-            err.status = 404;
-            return next(err);            
-        }
-    }, (err) => next(err))
-    .catch((err) => next(err));
-})
-.delete((req, res, next) => {
-    Courses.findById(req.params.courseId)
-    .then((course) => {
-        if (course != null && course.courseItem.id(req.params.courseItemId) != null) {
-            course.courseItem.id(req.params.courseItemId).remove();
-            course.save()
-            .then((course) => {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(course);                
-            }, (err) => next(err));
-        }
-        else if (course == null) {
-            err = new Error('Course ' + req.params.courseId + ' not found');
-            err.status = 404;
-            return next(err);
-        }
-        else {
-            err = new Error('CourseItem ' + req.params.courseItemId + ' not found');
-            err.status = 404;
-            return next(err);            
-        }
-    }, (err) => next(err))
-    .catch((err) => next(err));
-});
+// courseRouter.route('/:courseId/courseItem/:courseItemId')
+// .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+// .get(cors.cors,(req,res,next) => {
+//     Courses.findById(req.params.courseId)
+//     .then((course) => {
+//         if (course != null && course.courseItem.id(req.params.courseItemId) != null) {
+//             res.statusCode = 200;
+//             res.setHeader('Content-Type', 'application/json');
+//             res.json(course.courseItem.id(req.params.courseItemId));
+//         }
+//         else if (course == null) {
+//             err = new Error('Course ' + req.params.courseId + ' not found');
+//             err.status = 404;
+//             return next(err);
+//         }
+//         else {
+//             err = new Error('CourseItem ' + req.params.courseItemId + ' not found');
+//             err.status = 404;
+//             return next(err);            
+//         }
+//     }, (err) => next(err))
+//     .catch((err) => next(err));
+// })
+// .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+//     res.statusCode = 403;
+//     res.end('POST operation not supported on /courses/'+ req.params.courseId
+//         + '/courseItem/' + req.params.courseItemId);
+// })
+// .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+//     Courses.findById(req.params.courseId)
+//     .then((course) => {
+//         if (course != null && course.courseItem.id(req.params.courseItemId) != null) {
+//             if (req.body.title) {
+//                 course.courseItem.id(req.params.courseItemId).title = req.body.title;
+//             }
+//             if (req.body.video) {
+//                 course.couseItem.id(req.params.courseItemId).video = req.body.video;                
+//             }
+//             course.save()
+//             .then((course) => {
+//                 res.statusCode = 200;
+//                 res.setHeader('Content-Type', 'application/json');
+//                 res.json(course);                
+//             }, (err) => next(err));
+//         }
+//         else if (course == null) {
+//             err = new Error('Course ' + req.params.courseId + ' not found');
+//             err.status = 404;
+//             return next(err);
+//         }
+//         else {
+//             err = new Error('CourseItem ' + req.params.courseItemId + ' not found');
+//             err.status = 404;
+//             return next(err);            
+//         }
+//     }, (err) => next(err))
+//     .catch((err) => next(err));
+// })
+// .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+//     Courses.findById(req.params.courseId)
+//     .then((course) => {
+//         if (course != null && course.courseItem.id(req.params.courseItemId) != null) {
+//             course.courseItem.id(req.params.courseItemId).remove();
+//             course.save()
+//             .then((course) => {
+//                 res.statusCode = 200;
+//                 res.setHeader('Content-Type', 'application/json');
+//                 res.json(course);                
+//             }, (err) => next(err));
+//         }
+//         else if (course == null) {
+//             err = new Error('Course ' + req.params.courseId + ' not found');
+//             err.status = 404;
+//             return next(err);
+//         }
+//         else {
+//             err = new Error('CourseItem ' + req.params.courseItemId + ' not found');
+//             err.status = 404;
+//             return next(err);            
+//         }
+//     }, (err) => next(err))
+//     .catch((err) => next(err));
+// });
 
 
 module.exports = courseRouter;

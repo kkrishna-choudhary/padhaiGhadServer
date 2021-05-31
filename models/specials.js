@@ -5,26 +5,13 @@ require('mongoose-currency').loadType(mongoose);
 const Currency = mongoose.Types.Currency;
 
 
-
-const courseSchema = new Schema({
+const specialSchema = new Schema({
     name: {
         type: String,
         required: true,
         unique: true
     },
-    description: {
-        type: String,
-        required: true
-    },
     image: {
-        type: String,
-        required: true
-    },
-    courseDuration: {
-        type: String,
-        required: true
-    },
-    category: {
         type: String,
         required: true
     },
@@ -32,19 +19,23 @@ const courseSchema = new Schema({
         type: String,
         default: ''
     },
-    fee: {
+    price: {
         type: Currency,
         required: true,
         min: 0
+    },
+    description:{
+        type: String,
+        required: true
     },
     featured: {
         type: Boolean,
         default:false      
     }
-}, {
+},{
     timestamps: true
 });
 
-var Courses = mongoose.model('Course', courseSchema);
+var Specials = mongoose.model('Special', specialSchema);
 
-module.exports = Courses;
+module.exports = Specials;
