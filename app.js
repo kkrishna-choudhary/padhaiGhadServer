@@ -23,6 +23,7 @@ const uploadVideoRouter = require('./routes/uploadVideoRouter');
 var courseItemRouter = require('./routes/courseItemRouter');
 var enrolledCourseRouter = require('./routes/enrolledCourseRouter');
 var commentRouter = require('./routes/commentRouter');
+var feedbackRouter = require('./routes/feedbackRouter');
 
 const mongoose = require('mongoose');
 
@@ -75,6 +76,7 @@ app.use('/imageUpload',uploadImageRouter);
 app.use('/videoUpload',uploadVideoRouter);
 app.use('/courseItems',courseItemRouter);
 app.use('/enrolledCourses',enrolledCourseRouter);
+app.use('/feedbacks',feedbackRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
