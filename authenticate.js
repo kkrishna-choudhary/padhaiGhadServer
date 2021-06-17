@@ -6,6 +6,8 @@ var JwtStrategy = require('passport-jwt').Strategy;
 var ExtractJwt = require('passport-jwt').ExtractJwt;
 var jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
 
+var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+
 var config = require('./config.js');
 
 passport.use(new LocalStrategy(User.authenticate()));
@@ -50,3 +52,39 @@ exports.verifyAdmin = function(req,res,next) {
         return next(err);
     }
 };
+
+
+
+
+
+passport.use(new GoogleStrategy({
+    clientID: config.google.GOOGLE_CLIENT_ID,
+    clientSecret: config.google.GOOGLE_CLIENT_SECRET,
+    callbackURL: "https://localhost:3443/users/auth/google/callback"
+  },
+  function(accessToken, refreshToken, profile, done) {
+    //    User.findOrCreate({ googleId: profile.id }, function (err, user) {
+    //      return done(err, user);
+    //    });
+    User.findOne({googleId: profile.id}, (err, user) => {
+        if (err) {
+            return done(err, false);
+        }
+        if (!err && user !== null) {
+            return done(null, user);
+        }
+        else {
+            user = new User({ username: profile.displayName });
+            user.googleId = profile.id;
+            user.firstname = profile.name.givenName;
+            user.lastname = profile.name.familyName;
+            user.save((err, user) => {
+                if (err)
+                    return done(err, false);
+                else
+                    return done(null, user);
+            })
+        }
+    });
+  }
+));
