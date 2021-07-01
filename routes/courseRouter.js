@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 const Courses = require('../models/courses');
+const CourseItems = require('../models/courseItems');
 
 var authenticate = require('../authenticate');
 const cors = require('./cors');
@@ -75,11 +76,28 @@ courseRouter.route('/:courseId')
     .catch((err) => next(err));
 })
 .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+    // Courses.findByIdAndRemove(req.params.courseId)
+    // .then((resp) => {
+    //     res.statusCode = 200;
+    //     res.setHeader('Content-Type', 'application/json');
+    //     res.json(resp);
+    // }, (err) => next(err))
+    // .catch((err) => next(err));
+
+
     Courses.findByIdAndRemove(req.params.courseId)
     .then((resp) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'application/json');
-        res.json(resp);
+        CourseItems.deleteMany({course:req.params.courseId})
+        .then((response)=>{
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            
+            res.json(response);
+            res.redirect('/');
+            
+        },(err)=> next(err))
+        .catch((err) => next(err));
+        
     }, (err) => next(err))
     .catch((err) => next(err));
 });
